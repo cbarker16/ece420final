@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import Image
-
+import cv2
 
 def load_image_grayscale(image_path):
     """
@@ -9,7 +9,8 @@ def load_image_grayscale(image_path):
     img = Image.open(image_path)
     img = img.convert("L")  # Convert to grayscale
     img_data = np.array(img)
-    return img_data
+    return cv2.equalizeHist(img_data)
+    # return img_data
 
 def blur(image):
     # blurfilter = np.array([[1/16, 1/8, 1/16],
@@ -22,7 +23,7 @@ def blur(image):
     blurfft = fft2(blurfilter, s=padded_img.shape)
     blurred = ifft2(img_fft*blurfft)
     return blurred.astype(int)
-
+    # return image
 
 def apply_threshold(img_data, threshold=127):
     """
@@ -102,7 +103,7 @@ def detect_edges_sobel(binary_img):
     # time.sleep(10)
 
     # Threshold edges to binary for contour detection
-    edge_threshold = 0.1 * edges.max()
+    edge_threshold = 0.5 * edges.max()
     edges_binary = (edges > edge_threshold).astype(int)
 
     return edges_binary
@@ -149,13 +150,13 @@ def main_bounding_box(image_path):
     """
     # Load and preprocess image
     img_data = load_image_grayscale(image_path)
-    # blurred_data = blur(img_data)
-    # plt.figure()
-    # plt.imshow(blurred_data, cmap='gray')
-    # plt.title("Blurred Image")
-    # plt.show()
-    # binary_img = apply_threshold(blurred_data)
-    binary_img = apply_threshold(img_data)
+    blurred_data = blur(img_data)
+    plt.figure()
+    plt.imshow(blurred_data, cmap='gray')
+    plt.title("Blurred Image")
+    plt.show()
+    binary_img = apply_threshold(blurred_data)
+    # binary_img = apply_threshold(img_data)
     edges_binary = detect_edges_sobel(binary_img)
 
     plt.figure()
