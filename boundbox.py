@@ -11,12 +11,25 @@ def load_image_grayscale(image_path):
     img_data = np.array(img)
     return img_data
 
+def blur(image):
+    # blurfilter = np.array([[1/16, 1/8, 1/16],
+    #                     [1/8, 1/4, 1/8],
+    #                     [1/16, 1/8, 1/16]])
+    blurfilter = (1/100)* np.ones((10,10))
+
+    padded_img = np.pad(image, 1, mode='constant', constant_values=0)
+    img_fft = fft2(padded_img)
+    blurfft = fft2(blurfilter, s=padded_img.shape)
+    blurred = ifft2(img_fft*blurfft)
+    return blurred.astype(int)
+
 
 def apply_threshold(img_data, threshold=127):
     """
     Apply a binary threshold to a grayscale image.
     Pixels above the threshold become 1 (white), and below become 0 (black).
     """
+
     binary_img = np.where(img_data > threshold, 1, 0)
     return binary_img
 
@@ -54,6 +67,8 @@ def apply_threshold(img_data, threshold=127):
 
 import numpy as np
 from scipy.fft import fft2, ifft2
+from matplotlib import pyplot as plt
+import time
 
 
 def detect_edges_sobel(binary_img):
@@ -82,6 +97,9 @@ def detect_edges_sobel(binary_img):
 
     # Calculate the gradient magnitude
     edges = np.sqrt(gx ** 2 + gy ** 2)
+    # plt.figure()
+    # plt.imshow(edges,cmap='gray')
+    # time.sleep(10)
 
     # Threshold edges to binary for contour detection
     edge_threshold = 0.1 * edges.max()
@@ -131,8 +149,19 @@ def main_bounding_box(image_path):
     """
     # Load and preprocess image
     img_data = load_image_grayscale(image_path)
+    # blurred_data = blur(img_data)
+    # plt.figure()
+    # plt.imshow(blurred_data, cmap='gray')
+    # plt.title("Blurred Image")
+    # plt.show()
+    # binary_img = apply_threshold(blurred_data)
     binary_img = apply_threshold(img_data)
     edges_binary = detect_edges_sobel(binary_img)
+
+    plt.figure()
+    plt.imshow(edges_binary, cmap='gray')
+    plt.title("Binary Edge Image")
+    plt.show()
 
     # Find and return bounding box
     bounding_box = find_bounding_box(edges_binary)

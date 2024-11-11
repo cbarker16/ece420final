@@ -3,6 +3,7 @@ from opencvtest import get_main_bounding_box
 from boundbox import *
 
 image_path = "testimg.PNG"
+car = "carimg.JPG"
 # bounding_boxes = get_bounding_boxes(image_path)
 #
 # for idx, box in enumerate(bounding_boxes):
