@@ -9,15 +9,17 @@ def boxes(path):
 
     # Apply Gaussian blur to reduce noise
     blurred = cv2.GaussianBlur(image_gray, (9, 9), 0)
+    # blurred = cv2.GaussianBlur(image_gray, (9, 9), 0)
 
     # Use Canny edge detection
-    edges = cv2.Canny(blurred, threshold1=200, threshold2=150)
-
+    edges = cv2.Canny(blurred, threshold1=175, threshold2=150)
+    # edges = cv2.Canny(blurred, threshold1=200, threshold2=150)
     # Dilate the edges to close gaps between edge segments
     dilated_edges = cv2.dilate(edges, None, iterations=2)
 
     # Apply morphological closing to make car shapes more connected and defined
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
     closed_edges = cv2.morphologyEx(dilated_edges, cv2.MORPH_CLOSE, kernel)
 
     # Find contours in the closed edge-detected image
@@ -25,7 +27,7 @@ def boxes(path):
 
     # Define minimum contour area and aspect ratio to filter out irrelevant contours
     min_contour_area = 2000  # Adjusted to capture typical car sizes
-    min_aspect_ratio = 0.8  # Allow for more width variation in car shapes
+    min_aspect_ratio = 0.5  # Allow for more width variation in car shapes
     max_aspect_ratio = 4.0  # Limit to avoid long thin contours
 
     # Loop over the contours and draw bounding boxes for relevant ones
@@ -41,15 +43,15 @@ def boxes(path):
                 # Draw a bounding rectangle around detected cars
                 cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 boundingboxinfo.append(((x, y), w, h))
-        output_path = 'busyintersection_with_bounding_boxes.PNG'
+        output_path = 'multiboxout.PNG'
         cv2.imwrite(output_path, image)
     return boundingboxinfo, image
 
 # Load the uploaded image
-image_path = 'intersection2.jpg'
-
-info,newimage = boxes(image_path)
-pprint(info)
-plt.imshow(newimage)
-plt.show()
+# image_path = 'intersection2.jpg'
+#
+# info,newimage = boxes(image_path)
+# pprint(info)
+# plt.imshow(newimage)
+# plt.show()
 

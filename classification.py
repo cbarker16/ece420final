@@ -17,9 +17,20 @@ from torch import no_grad
 from utils import get_dataset_from_arrays
 from torch.utils.data import DataLoader
 
+# GOOD
+# rbout.jpg
+# intersection.jpg
+# lastoneplz.jpg
 
+# DECENT
+# helpme.jpg
 
-impath = "intersection.jpg"
+# ASS
+#busyintersection
+# intersection2
+
+impath = "plzblastonejpg.jpg"
+# impath = "rbout.jpg"
 info,image = boxes(impath)
 
 imlist = []
@@ -133,6 +144,25 @@ for i, predicted_idx in enumerate(predicted_idxs):
     else:
         print(f"Image {i + 1} does not contain a car.")
         labels.append("Not a Car")
+#
+# probabilities = F.softmax(output, dim=1)
+#
+# # Decode output
+# labels = []
+# _, predicted_idxs = torch.max(output, 1)  # Get the predicted index for each image in the batch
+# for i, (predicted_idx, probs) in enumerate(zip(predicted_idxs, probabilities)):
+#     class_name = idx_to_labels[predicted_idx.item()]  # Convert index to class name
+#     confidence = probs[predicted_idx].item()  # Confidence of the top prediction
+#
+#     # Check if the class name is related to cars and meets the confidence threshold
+#     if any(car_label in class_name.lower() for car_label in car_labels) and confidence >= 0.3:
+#         print(f"Image {i + 1} contains a car with confidence {confidence:.2f}")
+#         labels.append("Car")
+#     else:
+#         print(f"Image {i + 1} does not contain a car (confidence {confidence:.2f}).")
+#         labels.append("Not a Car")
+#
+
 
 #############################################
 
@@ -150,3 +180,5 @@ for idx, (tupl, label) in enumerate(zip(info, labels)):
 
 plt.imshow(image)
 plt.show()
+
+#
