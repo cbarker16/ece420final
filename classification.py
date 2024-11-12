@@ -1,28 +1,19 @@
 from multibox import boxes
 from matplotlib import pyplot as plt
-import torch
 import json
-import numpy as np
 import cv2
-
 import torch
 from torchvision import models, transforms
 from PIL import Image
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch import no_grad
-from utils import get_dataset_from_arrays
-from torch.utils.data import DataLoader
 
 # GOOD
 # rbout.jpg
 # intersection.jpg
 # lastoneplz.jpg
 # rbout2.jpg
-# bdoneplz.jpg
+# bdoneplz.jpeg
 
 # DECENT
 # helpme.jpg
@@ -33,8 +24,8 @@ from torch.utils.data import DataLoader
 # cluttered
 
 # impath = "crashout.jpg"
-# impath = "rbout2.jpg"
-impath = "rbout2.jpg"
+# impath = "intersection.jpg"
+impath = "bdoneplz.jpeg"
 info,image = boxes(impath)
 
 imlist = []
@@ -146,6 +137,7 @@ for i, predicted_idx in enumerate(predicted_idxs):
     if any(car_label in class_name.lower() for car_label in car_labels):
         print(f"Image {i + 1} contains a car")
         labels.append("Car")
+        carcount+=1
     else:
         print(f"Image {i + 1} does not contain a car.")
         labels.append("Not a Car")
@@ -171,7 +163,7 @@ for i, predicted_idx in enumerate(predicted_idxs):
 
 #############################################
 
-for idx, (tupl, label) in enumerate(zip(info, labels)):
+for idx, tupl in enumerate(info):
     x = tupl[0][0]
     y = tupl[0][1]
     w = tupl[1]
@@ -180,11 +172,15 @@ for idx, (tupl, label) in enumerate(zip(info, labels)):
     # Draw bounding box
     cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Green box
 
-    # Put the label above the bounding box
-    cv2.putText(image, label, (x, y + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+    # Put the label in the bounding box
+    cv2.putText(image, labels[idx], (x, y + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
+# cv2.putText(image, "CAR COUNT: " + str(carcount), (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 01.25, (255, 0, 0), 2)
+
+print("Car count = " + str(carcount))
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 plt.imshow(image)
 plt.show()
+
 
 #
