@@ -8,6 +8,8 @@ import cv2
 import torch
 from torchvision import models, transforms
 from PIL import Image
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -17,7 +19,7 @@ from torch.utils.data import DataLoader
 
 
 
-impath = "intersection2.jpg"
+impath = "intersection.jpg"
 info,image = boxes(impath)
 
 imlist = []
@@ -30,8 +32,20 @@ for tupl in info:
     h = tupl[2]
     imlist.append(image[y:y+h,x:x+w])
 
-plt.imshow(imlist[0])
-plt.show()
+# plt.imshow(image)
+# plt.show()
+# plt.imshow(imlist[1])
+# plt.show()
+# plt.imshow(imlist[3])
+# plt.show()
+# plt.imshow(imlist[4])
+# plt.show()
+# plt.imshow(imlist[5])
+# plt.show()
+# plt.imshow(imlist[6])
+# plt.show()
+# plt.imshow(imlist[7])
+# plt.show()
 # plt.imshow(imlist[10])
 # plt.show()
 # plt.imshow(imlist[11])
@@ -42,13 +56,15 @@ plt.show()
 # plt.show()
 # plt.imshow(imlist[14])
 
+# cv2.imwrite("testout.PNG", imlist[3])
 
-testimg = imlist[0]
+# testimg = imlist[0]
+#
+# testimg = Image.fromarray(testimg)
 
-testimg = Image.fromarray(testimg)
 
-# testimg = Image.fromarray(cv2.imread("newcar.jpg"))
-
+# testimg = Image.fromarray(cv2.imread("intersection.jpg"))
+# testimg = Image.fromarray(cv2.imread("testout.PNG"))
 
 #####################################
 # Load a pretrained model
@@ -59,7 +75,8 @@ with open("imagenet_class_index.json") as f:
 #     class_idx = json.load(f)
 
 
-model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+# model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V1)
 model.eval()  # Set model to evaluation mode
 
 
@@ -74,25 +91,62 @@ preprocess = transforms.Compose([
 
 # Load and preprocess image
 # input_image = Image.open(impath)
-input_tensor = preprocess(testimg)
-input_batch = input_tensor.unsqueeze(0)  # Create mini-batch as expected by the model
+#SINGLE IN
+# input_tensor = preprocess(testimg)
+# input_batch = input_tensor.unsqueeze(0)  # Create mini-batch as expected by the model
+
+#BATCH IN
+testimgs = []
+for i in imlist:
+    testimgs.append(preprocess(Image.fromarray(i)))
+
+input_batch = torch.stack(testimgs)
 
 # Inference
 with torch.no_grad():
     output = model(input_batch)
 
 # Decode output
-_, predicted_idx = torch.max(output, 1)
-class_name = idx_to_labels[predicted_idx.item()]
-
+#SINGLE OUT
+# _, predicted_idx = torch.max(output, 1)
+# class_name = idx_to_labels[predicted_idx.item()]
+#
 car_labels = {"minivan", "pickup", "police_van", "sports_car", "convertible",
               "cab", "racer", "recreational_vehicle", "moving_van", "tow_truck", "jeep", "beach_wagon"}
+#
+# if any(car_label in class_name.lower() for car_label in car_labels):
+#     print("The image contains a car.")
+# else:
+#     print("The image does not contain a car.")
 
-if any(car_label in class_name.lower() for car_label in car_labels):
-    print("The image contains a car.")
-else:
-    print("The image does not contain a car.")
 
-# print("Predicted:", class_name)
+#BATCH OUT
+labels = []
+_, predicted_idxs = torch.max(output, 1)  # Get the predicted index for each image in the batch
+for i, predicted_idx in enumerate(predicted_idxs):
+    class_name = idx_to_labels[predicted_idx.item()]  # Convert index to class name
+
+    # Check if the predicted class name contains any of the car-related labels
+    if any(car_label in class_name.lower() for car_label in car_labels):
+        print(f"Image {i + 1} contains a car")
+        labels.append("Car")
+    else:
+        print(f"Image {i + 1} does not contain a car.")
+        labels.append("Not a Car")
+
 #############################################
 
+for idx, (tupl, label) in enumerate(zip(info, labels)):
+    x = tupl[0][0]
+    y = tupl[0][1]
+    w = tupl[1]
+    h = tupl[2]
+
+    # Draw bounding box
+    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Green box
+
+    # Put the label above the bounding box
+    cv2.putText(image, label, (x, y + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+plt.imshow(image)
+plt.show()
