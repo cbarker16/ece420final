@@ -9,11 +9,11 @@ def boxes(path):
 
     # Apply Gaussian blur to reduce noise
     blurred = cv2.GaussianBlur(image_gray, (9, 9), 0)
-    # blurred = cv2.GaussianBlur(image_gray, (9, 9), 0)
+    # blurred = cv2.GaussianBlur(image_gray, (11, 11), 0)
 
     # Use Canny edge detection
     edges = cv2.Canny(blurred, threshold1=175, threshold2=150)
-    # edges = cv2.Canny(blurred, threshold1=200, threshold2=150)
+    # edges = cv2.Canny(blurred, threshold1=190, threshold2=150)
     # Dilate the edges to close gaps between edge segments
     dilated_edges = cv2.dilate(edges, None, iterations=2)
 

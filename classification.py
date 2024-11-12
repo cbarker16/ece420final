@@ -21,6 +21,8 @@ from torch.utils.data import DataLoader
 # rbout.jpg
 # intersection.jpg
 # lastoneplz.jpg
+# rbout2.jpg
+# bdoneplz.jpg
 
 # DECENT
 # helpme.jpg
@@ -28,9 +30,11 @@ from torch.utils.data import DataLoader
 # ASS
 #busyintersection
 # intersection2
+# cluttered
 
-impath = "plzblastonejpg.jpg"
-# impath = "rbout.jpg"
+# impath = "crashout.jpg"
+# impath = "rbout2.jpg"
+impath = "rbout2.jpg"
 info,image = boxes(impath)
 
 imlist = []
@@ -133,6 +137,7 @@ car_labels = {"minivan", "pickup", "police_van", "sports_car", "convertible",
 
 #BATCH OUT
 labels = []
+carcount = 0
 _, predicted_idxs = torch.max(output, 1)  # Get the predicted index for each image in the batch
 for i, predicted_idx in enumerate(predicted_idxs):
     class_name = idx_to_labels[predicted_idx.item()]  # Convert index to class name
@@ -176,8 +181,9 @@ for idx, (tupl, label) in enumerate(zip(info, labels)):
     cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Green box
 
     # Put the label above the bounding box
-    cv2.putText(image, label, (x, y + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+    cv2.putText(image, label, (x, y + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
+image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 plt.imshow(image)
 plt.show()
 
