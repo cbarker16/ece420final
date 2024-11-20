@@ -135,26 +135,38 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback{
             byte[] histeqData = histEq(data, width, height);
             retData = yuv2rgb(histeqData);
         }
-        else if (MainActivity.appFlag == 2){
-
-            int[] sharpData = conv2(data, width, height, kernelS);
-            retData = merge(sharpData, sharpData);
-        }
+//        else if (MainActivity.appFlag == 2){
+//
+//            int[] sharpData = conv2(data, width, height, kernelS);
+//            retData = merge(sharpData, sharpData);
+//        }
 //        else if (MainActivity.appFlag == 3){
+////            PRE PROCESSING
+//
 //            int[] xData = conv2(data, width, height, kernelX);
 //            int[] yData = conv2(data, width, height, kernelY);
 //            retData = merge(xData, yData);
 //        }
         else if (MainActivity.appFlag == 3) {
-            int[] xData = conv2(data, width, height, kernelX);
-            int[] yData = conv2(data, width, height, kernelY);
-            int[] edgeData = merge(xData, yData);
+            // Step 1: Convert to grayscale
+            int[] grayData = yuv2gray(data);
 
-            // Update retData for rendering
-            retData = edgeData;
+            // Step 2: Apply a blur
+            int[] blurredData = applyBlur(grayData);
+//            int[] blurredData = grayData;
 
-            // Draw edges and detect objects
-            detectAndDrawContours(canvas, edgeData);
+            // Step 3: Apply thresholding to create a binary image
+            int[] binaryData = applyThreshold(blurredData, 50); // Threshold value can be adjusted
+
+            int[] dilatedData = applyDilation(binaryData, width, height);
+
+
+            // Step 4: Perform edge detection using kernels
+            int[] xData = conv2(dilatedData, width, height, kernelX);
+            int[] yData = conv2(dilatedData, width, height, kernelY);
+
+            // Merge X and Y edges
+            retData = merge(xData, yData);
         }
 
 
@@ -265,6 +277,66 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback{
 
 //    START NEW CODE
 
+    public int[] applyThreshold(int[] grayData, int threshold) {
+        int size = width * height;
+        int[] binary = new int[size];
+
+        for (int i = 0; i < size; i++) {
+            binary[i] = grayData[i] >= threshold ? 255 : 0;
+        }
+        return binary;
+    }
+
+    public int[] applyDilation(int[] data, int width, int height) {
+        int[] dilatedData = new int[width * height];
+        int[][] structuringElement = {
+                {1, 1, 1},
+                {1, 1, 1},
+                {1, 1, 1}
+        };
+
+        for (int y = 1; y < height - 1; y++) {
+            for (int x = 1; x < width - 1; x++) {
+                int maxVal = 0;
+                for (int i = -1; i <= 1; i++) {
+                    for (int j = -1; j <= 1; j++) {
+                        int neighborIndex = (y + i) * width + (x + j);
+                        maxVal = Math.max(maxVal, data[neighborIndex]);
+                    }
+                }
+                dilatedData[y * width + x] = maxVal;
+            }
+        }
+        return dilatedData;
+    }
+
+
+    public int[] applyBlur(int[] data) {
+        double[][] blurKernel = {
+                {1/16.0, 2/16.0, 1/16.0},
+                {2/16.0, 4/16.0, 2/16.0},
+                {1/16.0, 2/16.0, 1/16.0}
+        }; // A Gaussian blur kernel, less aggressive
+        return conv2(data, width, height, blurKernel);
+    }
+
+
+
+
+    public int[] yuv2gray(byte[] data) {
+        final int frameSize = width * height;
+        int[] gray = new int[frameSize];
+
+        for (int j = 0, yp = 0; j < height; j++) {
+            for (int i = 0; i < width; i++, yp++) {
+                int y = (0xff & ((int) data[yp])) - 16;
+                y = y < 0 ? 0 : y;
+                gray[yp] = y;
+            }
+        }
+        return gray;
+    }
+
     private void detectAndDrawContours(Canvas canvas, int[] edgeData) {
         android.graphics.Paint paint = new android.graphics.Paint();
         paint.setStyle(android.graphics.Paint.Style.STROKE);
@@ -334,41 +406,78 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback{
 
 //    END NEW CODE
 
-    public int[] conv2(byte[] data, int width, int height, double kernel[][]){
-        // 0 is black and 255 is white.
+//    public int[] conv2(byte[] data, int width, int height, double kernel[][]){
+//        // 0 is black and 255 is white.
+//        int size = height * width;
+//        int[] convData = new int[size];
+//
+//        // Perform single channel 2D Convolution
+//        // Note that you only need to manipulate data[0:size] that corresponds to luminance
+//        // The rest data[size:data.length] is ignored since we only want grayscale output
+//        // *********************** START YOUR CODE HERE  **************************** //
+//
+//        double[][] newkern = new double[kernel.length][kernel[0].length];
+//
+//        for (int i = 0; i < newkern.length; i++) {
+//            for (int j = 0; j < newkern[0].length; j++) {
+//                newkern[i][j] = kernel[newkern.length - 1 - i][newkern[0].length - 1 - j];
+//            }
+//        }
+//
+//        for (int col = 0; col < width; col++) {
+//            for (int row = 0; row < height; row++) {
+//                double summ = 0;
+//                for (int i = 0; i < newkern.length; i++) {
+//                    for (int j = 0; j < newkern[0].length; j++) {
+//                        int kernx = j-newkern[0].length/2;
+//                        int kerny = i-newkern.length/2;
+//                        if ((kernx+col) >= 0 && (kernx+col) < width && (kerny+row) >= 0 && (kerny+row) < height) {
+//                            summ += newkern[i][j] * (double)(data[(kerny+row) * width + (kernx+col)]);
+//                        }
+//                    }
+//                }
+//                convData[(row*width)+col] = (byte)(summ);
+//            }
+//        }
+//        // *********************** End YOUR CODE HERE  **************************** //
+//        return convData;
+//    }
+    public int[] conv2(int[] data, int width, int height, double[][] kernel) {
         int size = height * width;
         int[] convData = new int[size];
 
-        // Perform single channel 2D Convolution
-        // Note that you only need to manipulate data[0:size] that corresponds to luminance
-        // The rest data[size:data.length] is ignored since we only want grayscale output
-        // *********************** START YOUR CODE HERE  **************************** //
-
+        // Flip the kernel
         double[][] newkern = new double[kernel.length][kernel[0].length];
-
         for (int i = 0; i < newkern.length; i++) {
             for (int j = 0; j < newkern[0].length; j++) {
                 newkern[i][j] = kernel[newkern.length - 1 - i][newkern[0].length - 1 - j];
             }
         }
 
+        // Perform Convolution
         for (int col = 0; col < width; col++) {
             for (int row = 0; row < height; row++) {
-                double summ = 0;
+                double summ = 0.0;
                 for (int i = 0; i < newkern.length; i++) {
                     for (int j = 0; j < newkern[0].length; j++) {
-                        int kernx = j-newkern[0].length/2;
-                        int kerny = i-newkern.length/2;
-                        if ((kernx+col) >= 0 && (kernx+col) < width && (kerny+row) >= 0 && (kerny+row) < height) {
-                            summ += newkern[i][j] * (double)(data[(kerny+row) * width + (kernx+col)]);
+                        int kernx = j - newkern[0].length / 2;
+                        int kerny = i - newkern.length / 2;
+
+                        // Ensure kernel doesn't go out of bounds
+                        if ((kernx + col) >= 0 && (kernx + col) < width &&
+                                (kerny + row) >= 0 && (kerny + row) < height) {
+                            int index = (kerny + row) * width + (kernx + col);
+                            summ += newkern[i][j] * data[index];
                         }
                     }
                 }
-                convData[(row*width)+col] = (byte)(summ);
+                // Clamp the result to valid grayscale range [0, 255]
+                convData[row * width + col] = Math.max(0, Math.min(255, (int)summ));
             }
         }
-        // *********************** End YOUR CODE HERE  **************************** //
         return convData;
     }
+
+
 
 }
